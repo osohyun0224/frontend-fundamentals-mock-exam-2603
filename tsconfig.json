@@ -26,7 +26,7 @@
     "baseUrl": "src",
     "paths": {
       "_tosslib/*": ["_tosslib/*"],
-      "pages/*": ["pages/*"],
+      "pages/*": ["shared/api/*"] /* test compat: tests spy on pages/remotes */,
       "features/*": ["features/*"],
       "shared/*": ["shared/*"],
       "containers/*": ["containers/*"],

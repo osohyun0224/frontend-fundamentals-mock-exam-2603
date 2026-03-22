@@ -1,11 +1,11 @@
 import { css } from '@emotion/react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Top, Spacing, Border, Text } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import { getRooms, getReservations, createReservation } from 'pages/remotes';
 import { formatDate } from 'shared/utils';
+import { useRooms, useReservations } from 'shared/api/queries';
+import { useCreateReservation } from './queries';
 import { filterAvailableRooms } from './utils/filterAvailableRooms';
 import { FilterPanel } from './components/FilterPanel';
 import { AvailableRoomList } from './components/AvailableRoomList';
@@ -13,7 +13,6 @@ import axios from 'axios';
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [date, setDate] = useState(searchParams.get('date') || formatDate(new Date()));
@@ -40,18 +39,9 @@ export function RoomBookingPage() {
     setSearchParams(params, { replace: true });
   }, [date, startTime, endTime, attendees, equipment, preferredFloor, setSearchParams]);
 
-  const { data: rooms = [] } = useQuery(['rooms'], getRooms);
-  const { data: reservations = [] } = useQuery(['reservations', date], () => getReservations(date), { enabled: !!date });
-  const createMutation = useMutation(
-    (data: { roomId: string; date: string; start: string; end: string; attendees: number; equipment: string[] }) =>
-      createReservation(data),
-    {
-      onSuccess: (_data, variables) => {
-        queryClient.invalidateQueries(['reservations', variables.date]);
-        queryClient.invalidateQueries(['myReservations']);
-      },
-    }
-  );
+  const { data: rooms = [] } = useRooms();
+  const { data: reservations = [] } = useReservations(date);
+  const createMutation = useCreateReservation();
 
   const resetSelection = () => {
     setSelectedRoomId(null);

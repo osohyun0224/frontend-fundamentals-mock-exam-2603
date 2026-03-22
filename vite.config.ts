@@ -24,7 +24,8 @@ export default defineConfig({
       _tosslib: path.resolve(__dirname, 'src/_tosslib'),
       features: path.resolve(__dirname, 'src/features'),
       shared: path.resolve(__dirname, 'src/shared'),
-      pages: path.resolve(__dirname, 'src/pages'),
+      // 'pages/remotes' alias for test compatibility — tests spy on this path
+      pages: path.resolve(__dirname, 'src/shared/api'),
       containers: path.resolve(__dirname, 'src/containers'),
       components: path.resolve(__dirname, 'src/components'),
       sections: path.resolve(__dirname, 'src/sections'),

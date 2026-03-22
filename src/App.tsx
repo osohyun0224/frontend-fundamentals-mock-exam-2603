@@ -6,7 +6,7 @@ import { GlobalPortal } from './GlobalPortal';
 
 import '_tosslib/sass/app.scss';
 import { PageLayout } from 'shared/components/PageLayout';
-import { Routes } from 'pages/Routes';
+import { Routes } from './Routes';
 
 export default function App() {
   const [queryClient] = useState(
