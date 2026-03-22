@@ -7,26 +7,30 @@ import { formatDate } from 'shared/utils';
 import { useRooms, useReservations } from 'shared/api/queries';
 import { useCreateReservation } from './queries';
 import { filterAvailableRooms } from './utils/filterAvailableRooms';
-import { FilterPanel } from './components/FilterPanel';
+import { FilterPanel, FilterValues } from './components/FilterPanel';
 import { AvailableRoomList } from './components/AvailableRoomList';
 import axios from 'axios';
+
+function parseFiltersFromParams(searchParams: URLSearchParams): FilterValues {
+  return {
+    date: searchParams.get('date') || formatDate(new Date()),
+    startTime: searchParams.get('startTime') || '',
+    endTime: searchParams.get('endTime') || '',
+    attendees: Number(searchParams.get('attendees')) || 1,
+    equipment: searchParams.get('equipment') ? searchParams.get('equipment')!.split(',').filter(Boolean) : [],
+    preferredFloor: searchParams.get('floor') ? Number(searchParams.get('floor')) : null,
+  };
+}
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [date, setDate] = useState(searchParams.get('date') || formatDate(new Date()));
-  const [startTime, setStartTime] = useState(searchParams.get('startTime') || '');
-  const [endTime, setEndTime] = useState(searchParams.get('endTime') || '');
-  const [attendees, setAttendees] = useState(Number(searchParams.get('attendees')) || 1);
-  const [equipment, setEquipment] = useState<string[]>(
-    searchParams.get('equipment') ? searchParams.get('equipment')!.split(',').filter(Boolean) : []
-  );
-  const [preferredFloor, setPreferredFloor] = useState<number | null>(
-    searchParams.get('floor') ? Number(searchParams.get('floor')) : null
-  );
+  const [filters, setFilters] = useState<FilterValues>(() => parseFiltersFromParams(searchParams));
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const { date, startTime, endTime, attendees, equipment, preferredFloor } = filters;
 
   useEffect(() => {
     const params: Record<string, string> = {};
@@ -43,17 +47,11 @@ export function RoomBookingPage() {
   const { data: reservations = [] } = useReservations(date);
   const createMutation = useCreateReservation();
 
-  const resetSelection = () => {
+  const handleFilterChange = (newFilters: FilterValues) => {
+    setFilters(newFilters);
     setSelectedRoomId(null);
     setErrorMessage(null);
   };
-
-  const handleDateChange = (v: string) => { setDate(v); resetSelection(); };
-  const handleStartTimeChange = (v: string) => { setStartTime(v); resetSelection(); };
-  const handleEndTimeChange = (v: string) => { setEndTime(v); resetSelection(); };
-  const handleAttendeesChange = (v: number) => { setAttendees(v); resetSelection(); };
-  const handleEquipmentChange = (v: string[]) => { setEquipment(v); resetSelection(); };
-  const handleFloorChange = (v: number | null) => { setPreferredFloor(v); resetSelection(); };
 
   const hasTimeInputs = startTime !== '' && endTime !== '';
   const isEndTimeBeforeStart = hasTimeInputs && endTime <= startTime;
@@ -149,20 +147,10 @@ export function RoomBookingPage() {
       <Spacing size={24} />
 
       <FilterPanel
-        date={date}
-        startTime={startTime}
-        endTime={endTime}
-        attendees={attendees}
-        equipment={equipment}
-        preferredFloor={preferredFloor}
+        filters={filters}
+        onFilterChange={handleFilterChange}
         floors={floors}
         validationError={validationError}
-        onDateChange={handleDateChange}
-        onStartTimeChange={handleStartTimeChange}
-        onEndTimeChange={handleEndTimeChange}
-        onAttendeesChange={handleAttendeesChange}
-        onEquipmentChange={handleEquipmentChange}
-        onFloorChange={handleFloorChange}
       />
 
       <Spacing size={24} />

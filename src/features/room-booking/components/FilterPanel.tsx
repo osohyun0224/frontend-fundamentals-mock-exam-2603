@@ -4,21 +4,20 @@ import { colors } from '_tosslib/constants/colors';
 import { EQUIPMENT_LABELS, ALL_EQUIPMENT, TIME_SLOTS } from 'shared/utils/constants';
 import { formatDate } from 'shared/utils';
 
-interface FilterPanelProps {
+export interface FilterValues {
   date: string;
   startTime: string;
   endTime: string;
   attendees: number;
   equipment: string[];
   preferredFloor: number | null;
+}
+
+interface FilterPanelProps {
+  filters: FilterValues;
+  onFilterChange: (filters: FilterValues) => void;
   floors: number[];
   validationError: string | null;
-  onDateChange: (date: string) => void;
-  onStartTimeChange: (time: string) => void;
-  onEndTimeChange: (time: string) => void;
-  onAttendeesChange: (count: number) => void;
-  onEquipmentChange: (equipment: string[]) => void;
-  onFloorChange: (floor: number | null) => void;
 }
 
 const dateInputStyle = css`
@@ -28,13 +27,14 @@ const dateInputStyle = css`
   transition: border-color 0.15s; &:focus { border-color: ${colors.blue500}; }
 `;
 
-export function FilterPanel({
-  date, startTime, endTime, attendees, equipment, preferredFloor, floors, validationError,
-  onDateChange, onStartTimeChange, onEndTimeChange, onAttendeesChange, onEquipmentChange, onFloorChange,
-}: FilterPanelProps) {
+export function FilterPanel({ filters, onFilterChange, floors, validationError }: FilterPanelProps) {
+  const { date, startTime, endTime, attendees, equipment, preferredFloor } = filters;
+
+  const update = (patch: Partial<FilterValues>) => onFilterChange({ ...filters, ...patch });
+
   const toggleEquipment = (eq: string) => {
     const isSelected = equipment.includes(eq);
-    onEquipmentChange(isSelected ? equipment.filter(e => e !== eq) : [...equipment, eq]);
+    update({ equipment: isSelected ? equipment.filter(e => e !== eq) : [...equipment, eq] });
   };
 
   return (
@@ -51,7 +51,7 @@ export function FilterPanel({
           type="date"
           value={date}
           min={formatDate(new Date())}
-          onChange={e => onDateChange(e.target.value)}
+          onChange={e => update({ date: e.target.value })}
           aria-label="날짜"
           css={dateInputStyle}
         />
@@ -62,7 +62,7 @@ export function FilterPanel({
       <div css={css`display: flex; gap: 12px;`}>
         <div css={css`display: flex; flex-direction: column; gap: 6px; flex: 1;`}>
           <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>시작 시간</Text>
-          <Select value={startTime} onChange={e => onStartTimeChange(e.target.value)} aria-label="시작 시간">
+          <Select value={startTime} onChange={e => update({ startTime: e.target.value })} aria-label="시작 시간">
             <option value="">선택</option>
             {TIME_SLOTS.slice(0, -1).map(t => (
               <option key={t} value={t}>{t}</option>
@@ -71,7 +71,7 @@ export function FilterPanel({
         </div>
         <div css={css`display: flex; flex-direction: column; gap: 6px; flex: 1;`}>
           <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>종료 시간</Text>
-          <Select value={endTime} onChange={e => onEndTimeChange(e.target.value)} aria-label="종료 시간">
+          <Select value={endTime} onChange={e => update({ endTime: e.target.value })} aria-label="종료 시간">
             <option value="">선택</option>
             {TIME_SLOTS.slice(1).map(t => (
               <option key={t} value={t}>{t}</option>
@@ -89,7 +89,7 @@ export function FilterPanel({
             type="number"
             min={1}
             value={attendees}
-            onChange={e => onAttendeesChange(Math.max(1, Number(e.target.value)))}
+            onChange={e => update({ attendees: Math.max(1, Number(e.target.value)) })}
             aria-label="참석 인원"
             css={dateInputStyle}
           />
@@ -98,7 +98,7 @@ export function FilterPanel({
           <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>선호 층</Text>
           <Select
             value={preferredFloor ?? ''}
-            onChange={e => onFloorChange(e.target.value === '' ? null : Number(e.target.value))}
+            onChange={e => update({ preferredFloor: e.target.value === '' ? null : Number(e.target.value) })}
             aria-label="선호 층"
           >
             <option value="">전체</option>
