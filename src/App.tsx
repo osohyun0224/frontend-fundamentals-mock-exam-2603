@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GlobalPortal } from './GlobalPortal';
 
 import '_tosslib/sass/app.scss';
-import { PageLayout } from 'pages/PageLayout';
+import { PageLayout } from 'shared/components/PageLayout';
 import { Routes } from 'pages/Routes';
 
 export default function App() {

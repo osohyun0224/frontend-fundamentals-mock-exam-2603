@@ -27,6 +27,8 @@
     "paths": {
       "_tosslib/*": ["_tosslib/*"],
       "pages/*": ["pages/*"],
+      "features/*": ["features/*"],
+      "shared/*": ["shared/*"],
       "containers/*": ["containers/*"],
       "components/*": ["components/*"],
       "sections/*": ["sections/*"],
@@ -40,5 +42,6 @@
     }
   },
   "include": ["src"],
+  "exclude": ["src/**/*.spec.tsx", "src/**/*.spec.ts", "src/**/*.test.tsx", "src/**/*.test.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
