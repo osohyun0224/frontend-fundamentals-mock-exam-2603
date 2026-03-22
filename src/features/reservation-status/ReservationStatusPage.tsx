@@ -5,7 +5,7 @@ import { Top, Spacing, Border, Button, Text } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { formatDate } from 'shared/utils';
 import { useRooms, useReservations } from 'shared/api/queries';
-import { useMyReservations, useCancelReservation } from './queries';
+import { useMyReservations, useCancelReservation } from './api/queries';
 import { Timeline } from './components/Timeline';
 import { MyReservationList } from './components/MyReservationList';
 
@@ -25,9 +25,9 @@ export function ReservationStatusPage() {
     }
   }, [locationState]);
 
-  const { data: rooms = [] } = useRooms();
-  const { data: reservations = [] } = useReservations(date);
-  const { data: myReservationList = [] } = useMyReservations();
+  const { data: rooms } = useRooms();
+  const { data: reservations } = useReservations(date);
+  const { data: myReservationList } = useMyReservations();
   const cancelMutation = useCancelReservation();
 
   const handleCancel = async (id: string) => {

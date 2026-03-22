@@ -5,7 +5,7 @@ import { Top, Spacing, Border, Text } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { formatDate } from 'shared/utils';
 import { useRooms, useReservations } from 'shared/api/queries';
-import { useCreateReservation } from './queries';
+import { useCreateReservation } from './api/queries';
 import { filterAvailableRooms } from './utils/filterAvailableRooms';
 import { FilterPanel, FilterValues } from './components/FilterPanel';
 import { AvailableRoomList } from './components/AvailableRoomList';
@@ -43,8 +43,8 @@ export function RoomBookingPage() {
     setSearchParams(params, { replace: true });
   }, [date, startTime, endTime, attendees, equipment, preferredFloor, setSearchParams]);
 
-  const { data: rooms = [] } = useRooms();
-  const { data: reservations = [] } = useReservations(date);
+  const { data: rooms } = useRooms();
+  const { data: reservations } = useReservations(date);
   const createMutation = useCreateReservation();
 
   const handleFilterChange = (newFilters: FilterValues) => {
