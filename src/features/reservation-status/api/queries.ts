@@ -5,7 +5,7 @@ import { Reservation } from 'shared/types';
 
 export function useMyReservations() {
   const query = useQuery(queryKeys.myReservations, getMyReservations, { suspense: true });
-  return { ...query, data: query.data as Reservation[] };
+  return { ...query, data: query.data ?? ([] as Reservation[]) };
 }
 
 export function useCancelReservation() {

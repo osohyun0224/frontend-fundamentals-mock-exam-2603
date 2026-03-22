@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Top, Spacing, Border, Text } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { formatDate } from 'shared/utils';
+import { Room } from 'shared/types';
 import { useRooms, useReservations } from 'shared/api/queries';
 import { useCreateReservation } from './api/queries';
 import { filterAvailableRooms } from './utils/filterAvailableRooms';
@@ -22,6 +23,31 @@ function parseFiltersFromParams(searchParams: URLSearchParams): FilterValues {
   };
 }
 
+function filtersToSearchParams(filters: FilterValues): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (filters.date) params.date = filters.date;
+  if (filters.startTime) params.startTime = filters.startTime;
+  if (filters.endTime) params.endTime = filters.endTime;
+  if (filters.attendees > 1) params.attendees = String(filters.attendees);
+  if (filters.equipment.length > 0) params.equipment = filters.equipment.join(',');
+  if (filters.preferredFloor !== null) params.floor = String(filters.preferredFloor);
+  return params;
+}
+
+function validateFilters(filters: FilterValues): string | null {
+  const hasTimeInputs = filters.startTime !== '' && filters.endTime !== '';
+  const isEndTimeBeforeStart = hasTimeInputs && filters.endTime <= filters.startTime;
+  const isAttendeesInvalid = filters.attendees < 1;
+
+  if (isEndTimeBeforeStart) return '종료 시간은 시작 시간보다 늦어야 합니다.';
+  if (isAttendeesInvalid) return '참석 인원은 1명 이상이어야 합니다.';
+  return null;
+}
+
+function getUniqueFloors(rooms: Room[]): number[] {
+  return [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b);
+}
+
 export function RoomBookingPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,15 +59,8 @@ export function RoomBookingPage() {
   const { date, startTime, endTime, attendees, equipment, preferredFloor } = filters;
 
   useEffect(() => {
-    const params: Record<string, string> = {};
-    if (date) params.date = date;
-    if (startTime) params.startTime = startTime;
-    if (endTime) params.endTime = endTime;
-    if (attendees > 1) params.attendees = String(attendees);
-    if (equipment.length > 0) params.equipment = equipment.join(',');
-    if (preferredFloor !== null) params.floor = String(preferredFloor);
-    setSearchParams(params, { replace: true });
-  }, [date, startTime, endTime, attendees, equipment, preferredFloor, setSearchParams]);
+    setSearchParams(filtersToSearchParams(filters), { replace: true });
+  }, [filters, setSearchParams]);
 
   const { data: rooms } = useRooms();
   const { data: reservations } = useReservations(date);
@@ -53,20 +72,11 @@ export function RoomBookingPage() {
     setErrorMessage(null);
   };
 
+  const validationError = validateFilters(filters);
   const hasTimeInputs = startTime !== '' && endTime !== '';
-  const isEndTimeBeforeStart = hasTimeInputs && endTime <= startTime;
-  const isAttendeesInvalid = attendees < 1;
-
-  let validationError: string | null = null;
-  if (isEndTimeBeforeStart) {
-    validationError = '종료 시간은 시작 시간보다 늦어야 합니다.';
-  } else if (isAttendeesInvalid) {
-    validationError = '참석 인원은 1명 이상이어야 합니다.';
-  }
-
   const isFilterComplete = hasTimeInputs && !validationError;
 
-  const floors = [...new Set(rooms.map((r: { floor: number }) => r.floor))].sort((a: number, b: number) => a - b);
+  const floors = getUniqueFloors(rooms);
 
   const availableRooms = isFilterComplete
     ? filterAvailableRooms(rooms, reservations, { attendees, equipment, preferredFloor, startTime, endTime, date })

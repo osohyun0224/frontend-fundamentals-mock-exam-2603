@@ -5,7 +5,7 @@ import { Room, Reservation } from 'shared/types';
 
 export function useRooms() {
   const query = useQuery(queryKeys.rooms, getRooms, { suspense: true });
-  return { ...query, data: query.data as Room[] };
+  return { ...query, data: query.data ?? ([] as Room[]) };
 }
 
 export function useReservations(date: string) {
