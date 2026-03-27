@@ -14,8 +14,8 @@ export function MyReservationList({ reservations, rooms, onCancel }: MyReservati
   const getRoomName = (roomId: string) => rooms.find(room => room.id === roomId)?.name ?? roomId;
 
   return (
-    <div css={css`padding: 0 24px;`}>
-      <div css={css`display: flex; align-items: baseline; gap: 6px;`}>
+    <div css={containerStyle}>
+      <div css={headerRowStyle}>
         <Text typography="t5" fontWeight="bold" color={colors.grey900}>
           내 예약
         </Text>
@@ -28,17 +28,17 @@ export function MyReservationList({ reservations, rooms, onCancel }: MyReservati
       <Spacing size={16} />
 
       {reservations.length === 0 ? (
-        <div css={css`padding: 40px 0; text-align: center; background: ${colors.grey50}; border-radius: 14px;`}>
+        <div css={emptyStateStyle}>
           <Text typography="t6" color={colors.grey500}>
             예약 내역이 없습니다.
           </Text>
         </div>
       ) : (
-        <div css={css`display: flex; flex-direction: column; gap: 10px;`}>
+        <div css={listStyle}>
           {reservations.map(reservation => (
             <div
               key={reservation.id}
-              css={css`padding: 14px 16px; border-radius: 14px; background: ${colors.grey50}; border: 1px solid ${colors.grey200};`}
+              css={reservationCardStyle}
             >
               <ListRow
                 contents={
@@ -72,3 +72,33 @@ export function MyReservationList({ reservations, rooms, onCancel }: MyReservati
     </div>
   );
 }
+
+const containerStyle = css`
+  padding: 0 24px;
+`;
+
+const headerRowStyle = css`
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+`;
+
+const emptyStateStyle = css`
+  padding: 40px 0;
+  text-align: center;
+  background: ${colors.grey50};
+  border-radius: 14px;
+`;
+
+const listStyle = css`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const reservationCardStyle = css`
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: ${colors.grey50};
+  border: 1px solid ${colors.grey200};
+`;

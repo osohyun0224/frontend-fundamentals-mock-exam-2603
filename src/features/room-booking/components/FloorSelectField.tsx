@@ -1,3 +1,4 @@
+import { css } from '@emotion/react';
 import { Text, Select } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 
@@ -9,7 +10,7 @@ interface FloorSelectFieldProps {
 
 export function FloorSelectField({ value, floors, onChange }: FloorSelectFieldProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+    <div css={containerStyle}>
       <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>
         선호 층
       </Text>
@@ -28,3 +29,10 @@ export function FloorSelectField({ value, floors, onChange }: FloorSelectFieldPr
     </div>
   );
 }
+
+const containerStyle = css`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+`;

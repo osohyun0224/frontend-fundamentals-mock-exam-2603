@@ -16,16 +16,7 @@ export function StatusMessageBanner({ message }: StatusMessageBannerProps) {
 
   return (
     <div css={containerStyle}>
-      <div
-        css={css`
-          padding: 10px 14px;
-          border-radius: 10px;
-          background: ${isSuccessMessage ? colors.blue50 : colors.red50};
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        `}
-      >
+      <div css={messageBoxStyle(isSuccessMessage)}>
         <Text typography="t7" fontWeight="medium" color={isSuccessMessage ? colors.blue600 : colors.red500}>
           {message.text}
         </Text>
@@ -37,4 +28,13 @@ export function StatusMessageBanner({ message }: StatusMessageBannerProps) {
 
 const containerStyle = css`
   padding: 0 24px;
+`;
+
+const messageBoxStyle = (isSuccessMessage: boolean) => css`
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: ${isSuccessMessage ? colors.blue50 : colors.red50};
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;

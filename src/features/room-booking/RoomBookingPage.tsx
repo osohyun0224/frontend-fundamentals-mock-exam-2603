@@ -44,33 +44,25 @@ export function RoomBookingPage() {
   );
 
   return (
-    <div css={css`background: ${colors.white}; padding-bottom: 40px;`}>
-      <div css={css`padding: 12px 24px 0;`}>
+    <div css={pageStyle}>
+      <div css={backButtonContainerStyle}>
         <button
           type="button"
           onClick={() => navigate('/')}
           aria-label="뒤로가기"
-          css={css`
-            background: none; border: none; padding: 0; cursor: pointer; font-size: 14px;
-            color: ${colors.grey600}; &:hover { color: ${colors.grey900}; }
-          `}
+          css={backButtonStyle}
         >
           ← 예약 현황으로
         </button>
       </div>
-      <Top.Top03 css={css`padding-left: 24px; padding-right: 24px;`}>
+      <Top.Top03 css={headerStyle}>
         예약하기
       </Top.Top03>
 
       {errorMessage && (
-        <div css={css`padding: 0 24px;`}>
+        <div css={errorContainerStyle}>
           <Spacing size={12} />
-          <div
-            css={css`
-              padding: 10px 14px; border-radius: 10px; background: ${colors.red50};
-              display: flex; align-items: center; gap: 8px;
-            `}
-          >
+          <div css={errorBoxStyle}>
             <Text typography="t7" fontWeight="medium" color={colors.red500}>{errorMessage}</Text>
           </div>
         </div>
@@ -179,4 +171,44 @@ const sectionStyle = css`
 const rowStyle = css`
   display: flex;
   gap: 12px;
+`;
+
+const pageStyle = css`
+  background: ${colors.white};
+  padding-bottom: 40px;
+`;
+
+const backButtonContainerStyle = css`
+  padding: 12px 24px 0;
+`;
+
+const backButtonStyle = css`
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 14px;
+  color: ${colors.grey600};
+
+  &:hover {
+    color: ${colors.grey900};
+  }
+`;
+
+const headerStyle = css`
+  padding-left: 24px;
+  padding-right: 24px;
+`;
+
+const errorContainerStyle = css`
+  padding: 0 24px;
+`;
+
+const errorBoxStyle = css`
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: ${colors.red50};
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;

@@ -30,16 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          css={css`
-            padding: 40px 24px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-          `}
-        >
+        <div css={errorContainerStyle}>
           <Text typography="t5" fontWeight="bold" color={colors.grey900}>
             문제가 발생했습니다
           </Text>
@@ -58,3 +49,12 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+const errorContainerStyle = css`
+  padding: 40px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+`;
