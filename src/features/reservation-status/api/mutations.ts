@@ -7,15 +7,13 @@ interface CancelReservationParams {
   reservationDate: string;
 }
 
-export const cancelReservationMutationOptions = (queryClient: ReturnType<typeof useQueryClient>) => ({
-  mutationFn: ({ reservationId }: CancelReservationParams) => remotes.cancelReservation(reservationId),
-  onSuccess: (_data: unknown, variables: CancelReservationParams) => {
-    queryClient.invalidateQueries(queryKeys.reservations(variables.reservationDate));
-    queryClient.invalidateQueries(queryKeys.myReservations);
-  },
-});
-
 export function useCancelReservation() {
   const queryClient = useQueryClient();
-  return useMutation(cancelReservationMutationOptions(queryClient));
+  return useMutation({
+    mutationFn: ({ reservationId }: CancelReservationParams) => remotes.cancelReservation(reservationId),
+    onSuccess: (_data: unknown, variables: CancelReservationParams) => {
+      queryClient.invalidateQueries(queryKeys.reservations(variables.reservationDate));
+      queryClient.invalidateQueries(queryKeys.myReservations);
+    },
+  });
 }

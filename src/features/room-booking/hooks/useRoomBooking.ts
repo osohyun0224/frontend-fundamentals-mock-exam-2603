@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BookingParams } from '../utils/searchParams';
-import { useCreateReservation } from '../api/queries';
+import { useCreateReservation } from '../api/mutations';
 
 interface UseRoomBookingParams {
   filters: BookingParams;

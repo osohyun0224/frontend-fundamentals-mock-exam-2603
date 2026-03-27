@@ -11,16 +11,15 @@ type CreateReservationParams = {
   equipment: string[];
 };
 
-export const createReservationMutationOptions = (queryClient: ReturnType<typeof useQueryClient>) =>
-  ({
+type CreateReservationResult = Awaited<ReturnType<typeof remotes.createReservation>>;
+
+export function useCreateReservation() {
+  const queryClient = useQueryClient();
+  return useMutation<CreateReservationResult, unknown, CreateReservationParams>({
     mutationFn: (data: CreateReservationParams) => remotes.createReservation(data),
     onSuccess: (_data: unknown, variables: CreateReservationParams) => {
       queryClient.invalidateQueries(queryKeys.reservations(variables.date));
       queryClient.invalidateQueries(queryKeys.myReservations);
     },
   });
-
-export function useCreateReservation() {
-  const queryClient = useQueryClient();
-  return useMutation(createReservationMutationOptions(queryClient));
 }
