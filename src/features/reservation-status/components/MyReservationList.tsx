@@ -2,20 +2,16 @@ import { css } from '@emotion/react';
 import { Spacing, Button, Text, ListRow } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { Room, Reservation } from 'shared/types';
-import { EQUIPMENT_LABELS } from 'shared/utils/constants';
+import { formatEquipmentListOrFallback } from 'shared/utils/equipment';
 
 interface MyReservationListProps {
   reservations: Reservation[];
   rooms: Room[];
-  onCancel: (id: string) => void;
-}
-
-function formatEquipment(equipment: Reservation['equipment']): string {
-  return equipment.map(e => EQUIPMENT_LABELS[e]).join(', ') || '장비 없음';
+  onCancel: (params: { reservationId: string; reservationDate: string }) => void;
 }
 
 export function MyReservationList({ reservations, rooms, onCancel }: MyReservationListProps) {
-  const getRoomName = (roomId: string) => rooms.find(r => r.id === roomId)?.name ?? roomId;
+  const getRoomName = (roomId: string) => rooms.find(room => room.id === roomId)?.name ?? roomId;
 
   return (
     <div css={css`padding: 0 24px;`}>
@@ -39,17 +35,17 @@ export function MyReservationList({ reservations, rooms, onCancel }: MyReservati
         </div>
       ) : (
         <div css={css`display: flex; flex-direction: column; gap: 10px;`}>
-          {reservations.map(res => (
+          {reservations.map(reservation => (
             <div
-              key={res.id}
+              key={reservation.id}
               css={css`padding: 14px 16px; border-radius: 14px; background: ${colors.grey50}; border: 1px solid ${colors.grey200};`}
             >
               <ListRow
                 contents={
                   <ListRow.Text2Rows
-                    top={getRoomName(res.roomId)}
+                    top={getRoomName(reservation.roomId)}
                     topProps={{ typography: 't6', fontWeight: 'bold', color: colors.grey900 }}
-                    bottom={`${res.date} ${res.start}~${res.end} · ${res.attendees}명 · ${formatEquipment(res.equipment)}`}
+                    bottom={`${reservation.date} ${reservation.start}~${reservation.end} · ${reservation.attendees}명 · ${formatEquipmentListOrFallback(reservation.equipment, '장비 없음')}`}
                     bottomProps={{ typography: 't7', color: colors.grey600 }}
                   />
                 }
@@ -61,7 +57,7 @@ export function MyReservationList({ reservations, rooms, onCancel }: MyReservati
                     onClick={(e) => {
                       e.stopPropagation();
                       if (window.confirm('정말 취소하시겠습니까?')) {
-                        onCancel(res.id);
+                        onCancel({ reservationId: reservation.id, reservationDate: reservation.date });
                       }
                     }}
                   >

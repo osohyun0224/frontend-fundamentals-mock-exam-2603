@@ -31,8 +31,10 @@ export function filterAvailableRooms(rooms: Room[], reservations: Reservation[],
       if (!meetsCapacity(room, filters.attendees)) return false;
       if (!hasRequiredEquipment(room, filters.equipment)) return false;
       if (!matchesFloor(room, filters.preferredFloor)) return false;
-      const conflicting = reservations.some(r => hasTimeConflict(r, room.id, filters.date, filters.startTime, filters.endTime));
-      return !conflicting;
+      const hasConflictingReservation = reservations.some(reservation =>
+        hasTimeConflict(reservation, room.id, filters.date, filters.startTime, filters.endTime)
+      );
+      return !hasConflictingReservation;
     })
     .sort((a, b) => {
       if (a.floor !== b.floor) return a.floor - b.floor;

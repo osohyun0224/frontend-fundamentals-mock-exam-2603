@@ -1,74 +1,34 @@
 import { css } from '@emotion/react';
-import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Top, Spacing, Border, Button, Text } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import { formatDate } from 'shared/utils';
 import { useRooms, useReservations } from 'shared/api/queries';
-import { useMyReservations, useCancelReservation } from './api/queries';
+import { useMyReservations } from './api/queries';
 import { Timeline } from './components/Timeline';
 import { MyReservationList } from './components/MyReservationList';
+import { DateSelectionSection } from './components/DateSelectionSection';
+import { StatusMessageBanner } from './components/StatusMessageBanner';
+import { useReservationStatusState } from './hooks/useReservationStatusState';
+import { useCancelMyReservation } from './hooks/useCancelMyReservation';
 
 export function ReservationStatusPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [date, setDate] = useState(formatDate(new Date()));
-
-  const locationState = location.state as { message?: string } | null;
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    locationState?.message ? { type: 'success', text: locationState.message } : null
-  );
-
-  useEffect(() => {
-    if (locationState?.message) {
-      window.history.replaceState({}, '');
-    }
-  }, [locationState]);
+  const { date, setDate, message, setMessage } = useReservationStatusState();
 
   const { data: rooms } = useRooms();
   const { data: reservations } = useReservations(date);
   const { data: myReservationList } = useMyReservations();
-  const cancelMutation = useCancelReservation();
-
-  const handleCancel = async (id: string) => {
-    try {
-      await cancelMutation.mutateAsync(id);
-      setMessage({ type: 'success', text: '예약이 취소되었습니다.' });
-    } catch {
-      setMessage({ type: 'error', text: '취소에 실패했습니다.' });
-    }
-  };
+  const { handleCancel, isCancelling } = useCancelMyReservation({ setMessage });
 
   return (
-    <div css={css`background: ${colors.white}; padding-bottom: 40px;`}>
-      <Top.Top03 css={css`padding-left: 24px; padding-right: 24px;`}>
+    <div css={pageStyle}>
+      <Top.Top03 css={headerStyle}>
         회의실 예약
       </Top.Top03>
 
       <Spacing size={24} />
 
-      {/* 날짜 선택 */}
-      <div css={css`padding: 0 24px;`}>
-        <Text typography="t5" fontWeight="bold" color={colors.grey900}>
-          날짜 선택
-        </Text>
-        <Spacing size={16} />
-        <div css={css`display: flex; flex-direction: column; gap: 6px;`}>
-          <input
-            type="date"
-            value={date}
-            min={formatDate(new Date())}
-            onChange={e => setDate(e.target.value)}
-            aria-label="날짜"
-            css={css`
-              box-sizing: border-box; font-size: 16px; font-weight: 500; line-height: 1.5; height: 48px;
-              background-color: ${colors.grey50}; border-radius: 12px; color: ${colors.grey800};
-              width: 100%; border: 1px solid ${colors.grey200}; padding: 0 16px; outline: none;
-              transition: border-color 0.15s; &:focus { border-color: ${colors.blue500}; }
-            `}
-          />
-        </div>
-      </div>
+      <DateSelectionSection date={date} onDateChange={setDate} />
 
       <Spacing size={24} />
       <Border size={8} />
@@ -80,27 +40,7 @@ export function ReservationStatusPage() {
       <Border size={8} />
       <Spacing size={24} />
 
-      {/* 메시지 배너 */}
-      {message && (
-        <div css={css`padding: 0 24px;`}>
-          <div
-            css={css`
-              padding: 10px 14px; border-radius: 10px;
-              background: ${message.type === 'success' ? colors.blue50 : colors.red50};
-              display: flex; align-items: center; gap: 8px;
-            `}
-          >
-            <Text
-              typography="t7"
-              fontWeight="medium"
-              color={message.type === 'success' ? colors.blue600 : colors.red500}
-            >
-              {message.text}
-            </Text>
-          </div>
-          <Spacing size={12} />
-        </div>
-      )}
+      <StatusMessageBanner message={message} />
 
       <MyReservationList
         reservations={myReservationList}
@@ -112,8 +52,8 @@ export function ReservationStatusPage() {
       <Border size={8} />
       <Spacing size={24} />
 
-      <div css={css`padding: 0 24px;`}>
-        <Button display="full" onClick={() => navigate('/booking')}>
+      <div css={sectionStyle}>
+        <Button display="full" onClick={() => navigate('/booking')} disabled={isCancelling}>
           예약하기
         </Button>
       </div>
@@ -121,3 +61,17 @@ export function ReservationStatusPage() {
     </div>
   );
 }
+
+const pageStyle = css`
+  background: ${colors.white};
+  padding-bottom: 40px;
+`;
+
+const headerStyle = css`
+  padding-left: 24px;
+  padding-right: 24px;
+`;
+
+const sectionStyle = css`
+  padding: 0 24px;
+`;

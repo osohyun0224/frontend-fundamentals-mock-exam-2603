@@ -1,125 +1,47 @@
 import { css } from '@emotion/react';
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Top, Spacing, Border, Text } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { formatDate } from 'shared/utils';
+import { TIME_SLOTS } from 'shared/utils/constants';
 import { Room } from 'shared/types';
 import { useRooms, useReservations } from 'shared/api/queries';
-import { useCreateReservation } from './api/queries';
 import { filterAvailableRooms } from './utils/filterAvailableRooms';
-import { FilterPanel, FilterValues } from './components/FilterPanel';
 import { AvailableRoomList } from './components/AvailableRoomList';
-import axios from 'axios';
-
-function parseFiltersFromParams(searchParams: URLSearchParams): FilterValues {
-  return {
-    date: searchParams.get('date') || formatDate(new Date()),
-    startTime: searchParams.get('startTime') || '',
-    endTime: searchParams.get('endTime') || '',
-    attendees: Number(searchParams.get('attendees')) || 1,
-    equipment: searchParams.get('equipment') ? searchParams.get('equipment')!.split(',').filter(Boolean) : [],
-    preferredFloor: searchParams.get('floor') ? Number(searchParams.get('floor')) : null,
-  };
-}
-
-function filtersToSearchParams(filters: FilterValues): Record<string, string> {
-  const params: Record<string, string> = {};
-  if (filters.date) params.date = filters.date;
-  if (filters.startTime) params.startTime = filters.startTime;
-  if (filters.endTime) params.endTime = filters.endTime;
-  if (filters.attendees > 1) params.attendees = String(filters.attendees);
-  if (filters.equipment.length > 0) params.equipment = filters.equipment.join(',');
-  if (filters.preferredFloor !== null) params.floor = String(filters.preferredFloor);
-  return params;
-}
-
-function validateFilters(filters: FilterValues): string | null {
-  const hasTimeInputs = filters.startTime !== '' && filters.endTime !== '';
-  const isEndTimeBeforeStart = hasTimeInputs && filters.endTime <= filters.startTime;
-  const isAttendeesInvalid = filters.attendees < 1;
-
-  if (isEndTimeBeforeStart) return '종료 시간은 시작 시간보다 늦어야 합니다.';
-  if (isAttendeesInvalid) return '참석 인원은 1명 이상이어야 합니다.';
-  return null;
-}
+import { DateField } from './components/DateField';
+import { TimeSelectField } from './components/TimeSelectField';
+import { AttendeesField } from './components/AttendeesField';
+import { FloorSelectField } from './components/FloorSelectField';
+import { EquipmentSelector } from './components/EquipmentSelector';
+import { useBookingSearchParams } from './hooks/useBookingSearchParams';
+import { useBookingFilterState } from './hooks/useBookingFilterState';
+import { useRoomBooking } from './hooks/useRoomBooking';
 
 function getUniqueFloors(rooms: Room[]): number[] {
-  return [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b);
+  return [...new Set(rooms.map(room => room.floor))].sort((a, b) => a - b);
 }
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const [filters, setFilters] = useState<FilterValues>(() => parseFiltersFromParams(searchParams));
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { filters, updateFilter } = useBookingSearchParams();
 
   const { date, startTime, endTime, attendees, equipment, preferredFloor } = filters;
 
-  useEffect(() => {
-    setSearchParams(filtersToSearchParams(filters), { replace: true });
-  }, [filters, setSearchParams]);
-
   const { data: rooms } = useRooms();
   const { data: reservations } = useReservations(date);
-  const createMutation = useCreateReservation();
+  const { validationError, isFilterComplete } = useBookingFilterState({ filters });
+  const { selectedRoomId, errorMessage, isBooking, resetBookingState, handleRoomSelect, submitBooking } = useRoomBooking({ filters });
 
-  const handleFilterChange = (newFilters: FilterValues) => {
-    setFilters(newFilters);
-    setSelectedRoomId(null);
-    setErrorMessage(null);
-  };
+  const floors = useMemo(() => getUniqueFloors(rooms), [rooms]);
 
-  const validationError = validateFilters(filters);
-  const hasTimeInputs = startTime !== '' && endTime !== '';
-  const isFilterComplete = hasTimeInputs && !validationError;
-
-  const floors = getUniqueFloors(rooms);
-
-  const availableRooms = isFilterComplete
-    ? filterAvailableRooms(rooms, reservations, { attendees, equipment, preferredFloor, startTime, endTime, date })
-    : [];
-
-  const handleBook = async () => {
-    if (!selectedRoomId) {
-      setErrorMessage('회의실을 선택해주세요.');
-      return;
-    }
-    if (!startTime || !endTime) {
-      setErrorMessage('시작 시간과 종료 시간을 선택해주세요.');
-      return;
-    }
-
-    try {
-      const result = await createMutation.mutateAsync({
-        roomId: selectedRoomId,
-        date,
-        start: startTime,
-        end: endTime,
-        attendees,
-        equipment,
-      });
-
-      if ('ok' in result && result.ok) {
-        navigate('/', { state: { message: '예약이 완료되었습니다!' } });
-        return;
-      }
-
-      const errResult = result as { message?: string };
-      setErrorMessage(errResult.message ?? '예약에 실패했습니다.');
-      setSelectedRoomId(null);
-    } catch (err: unknown) {
-      let serverMessage = '예약에 실패했습니다.';
-      if (axios.isAxiosError(err)) {
-        const data = err.response?.data as { message?: string } | undefined;
-        serverMessage = data?.message ?? serverMessage;
-      }
-      setErrorMessage(serverMessage);
-      setSelectedRoomId(null);
-    }
-  };
+  const availableRooms = useMemo(
+    () =>
+      isFilterComplete
+        ? filterAvailableRooms(rooms, reservations, { attendees, equipment, preferredFloor, startTime, endTime, date })
+        : [],
+    [attendees, date, endTime, equipment, isFilterComplete, preferredFloor, reservations, rooms, startTime]
+  );
 
   return (
     <div css={css`background: ${colors.white}; padding-bottom: 40px;`}>
@@ -156,12 +78,80 @@ export function RoomBookingPage() {
 
       <Spacing size={24} />
 
-      <FilterPanel
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        floors={floors}
-        validationError={validationError}
-      />
+      <section css={sectionStyle}>
+        <Text typography="t5" fontWeight="bold" color={colors.grey900}>
+          예약 조건
+        </Text>
+        <Spacing size={16} />
+
+        <DateField
+          value={filters.date}
+          min={formatDate(new Date())}
+          onChange={dateValue => {
+            updateFilter('date', dateValue);
+            resetBookingState();
+          }}
+        />
+        <Spacing size={14} />
+
+        <div css={rowStyle}>
+          <TimeSelectField
+            label="시작 시간"
+            value={filters.startTime}
+            options={TIME_SLOTS.slice(0, -1)}
+            onChange={startValue => {
+              updateFilter('startTime', startValue);
+              resetBookingState();
+            }}
+          />
+          <TimeSelectField
+            label="종료 시간"
+            value={filters.endTime}
+            options={TIME_SLOTS.slice(1)}
+            onChange={endValue => {
+              updateFilter('endTime', endValue);
+              resetBookingState();
+            }}
+          />
+        </div>
+        <Spacing size={14} />
+
+        <div css={rowStyle}>
+          <AttendeesField
+            value={filters.attendees}
+            onChange={attendeesValue => {
+              updateFilter('attendees', attendeesValue);
+              resetBookingState();
+            }}
+          />
+          <FloorSelectField
+            value={filters.preferredFloor}
+            floors={floors}
+            onChange={preferredFloorValue => {
+              updateFilter('preferredFloor', preferredFloorValue);
+              resetBookingState();
+            }}
+          />
+        </div>
+        <Spacing size={14} />
+
+        <EquipmentSelector
+          value={filters.equipment}
+          onChange={equipmentValue => {
+            updateFilter('equipment', equipmentValue);
+            resetBookingState();
+          }}
+        />
+
+        {validationError && (
+          <>
+            <Spacing size={8} />
+            <Text typography="t7" color={colors.red500} role="alert">
+              {validationError}
+            </Text>
+          </>
+        )}
+      </section>
 
       <Spacing size={24} />
       <Border size={8} />
@@ -171,9 +161,9 @@ export function RoomBookingPage() {
         <AvailableRoomList
           rooms={availableRooms}
           selectedRoomId={selectedRoomId}
-          isBooking={createMutation.isLoading}
-          onSelectRoom={setSelectedRoomId}
-          onBook={handleBook}
+          isBooking={isBooking}
+          onSelectRoom={handleRoomSelect}
+          onBook={submitBooking}
         />
       )}
 
@@ -181,3 +171,12 @@ export function RoomBookingPage() {
     </div>
   );
 }
+
+const sectionStyle = css`
+  padding: 0 24px;
+`;
+
+const rowStyle = css`
+  display: flex;
+  gap: 12px;
+`;
